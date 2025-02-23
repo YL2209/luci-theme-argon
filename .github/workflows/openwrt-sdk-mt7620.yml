@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: OpenWrt-SDK luci-app-campus-network-login-mt7621
+name: OpenWrt-SDK luci-app-campus-network-login-mt7620
 
 on:
   repository_dispatch:
@@ -18,16 +18,16 @@ on:
   push:
     paths:
       - 'workflows/**'
-      - '.github/workflows/openwrt-sdk-mt7621.yml'
+      - '.github/workflows/openwrt-sdk-mt7620.yml'
 
 env:
   BASE_URL: https://downloads.openwrt.org/releases
   TARGET_SYATEM: ramips
-  SUBTARGET: mt7621
+  SUBTARGET: mt7620
   RELEASE_VERSION: 24.10.0
   TOOLCHAIN: gcc-13.3.0_musl
-  PACKAGE: luci-theme-argon
-  PACKAGE2: argon
+  PACKAGE: luci-app-campus-network-login
+  PACKAGE2: campus-network-login
   DIY_P_SH: workflows/diy-part.sh
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
