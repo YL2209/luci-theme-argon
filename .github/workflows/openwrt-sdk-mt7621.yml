@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: OpenWrt-SDK luci-app-campus-network-login-mt7621
+name: OpenWrt-SDK
 
 on:
   repository_dispatch:
@@ -27,7 +27,8 @@ env:
   RELEASE_VERSION: 24.10.0
   TOOLCHAIN: gcc-13.3.0_musl
   PACKAGE: luci-theme-argon
-  PACKAGE2: argon
+  PACKAGE_IPK: argon
+  IPK_ALL: false
   DIY_P_SH: workflows/diy-part.sh
   UPLOAD_RELEASE: true
   TZ: Asia/Shanghai
@@ -75,9 +76,7 @@ jobs:
 
     - name: 更新&&下载 feeds
       run: |
-        pwd
         cd sdk
-        git clone https://github.com/${{ github.repository }}.git package/${{ env.PACKAGE }}
         ./scripts/feeds update -a && ./scripts/feeds install -a
 
     - name: 配置.config
@@ -102,8 +101,26 @@ jobs:
         echo -e "make package/${{ env.PACKAGE }}/{clean,compile} -j$(nproc)"
         make package/${{ env.PACKAGE }}/{clean,compile} -j$(nproc)
         echo "status=success" >> $GITHUB_OUTPUT
-        cd bin/packages/*/base/
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+
+    - name: Determine files to upload
+      id: determine-files
+      run: |
+        cd sdk
+        if [ "${{ env.IPK_ALL }}" == true ]; then
+          tar -zcvf ipk_all.tar.gz bin
+          echo "$PWD"
+          echo "FIRMWARE=$PWD/ipk_all.tar.gz" >> $GITHUB_ENV
+        else
+          mkdir bin/ipk
+          mv bin/packages/*/base/* bin/ipk
+          mv bin/packages/*/luci/* bin/ipk
+          mv bin/packages/*/packages/* bin/ipk
+          mv bin/targets/*/*/packages/* bin/ipk
+          cd bin/ipk
+          echo "$PWD"
+          echo "FIRMWARE=$PWD/*${{ env.PACKAGE_IPK }}*" >> $GITHUB_ENV
+        fi
+        echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Check space usage
       if: (!cancelled())
@@ -126,8 +143,8 @@ jobs:
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
-        files: ${{ env.FIRMWARE }}/*${{ env.PACKAGE2 }}*.ipk
-
+        files: ${{ env.FIRMWARE }}
+          
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
       with:
